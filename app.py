@@ -1,6 +1,8 @@
 import os
 import json
 from flask import Flask, render_template, jsonify, request
+from uninformed import bfs, dfs, ucs, ids
+from informed import greedy_best_first, a_star
 
 app = Flask(__name__)
 
@@ -39,21 +41,60 @@ def get_map():
 
 @app.route("/api/search", methods=["POST"])
 def search():
-    """
-    Search endpoint placeholder for deployment testing.
-    """
     payload = request.get_json() or {}
+
     start = payload.get("start", "")
     goal = payload.get("goal", "")
     algorithm = payload.get("algorithm", "")
 
-    return jsonify({
-        "status": "ready",
-        "message": f"Deployment server active. Request received for algorithm '{algorithm}' from '{start}' to '{goal}'.",
-        "path": [],
-        "cost": 0,
-        "nodes_expanded": 0
-    })
+    data = load_map_data()
+    graph = data["graph"]
+    locations = data["locations"]
+
+    try:
+        if algorithm == "bfs":
+            path, cost, nodes_expanded = bfs(graph, start, goal)
+
+        elif algorithm == "dfs":
+            path, cost, nodes_expanded = dfs(graph, start, goal)
+
+        elif algorithm == "ucs":
+            path, cost, nodes_expanded = ucs(graph, start, goal)
+
+        elif algorithm == "ids":
+            path, cost, nodes_expanded = ids(graph, start, goal)
+
+        elif algorithm == "greedy":
+            path, cost, nodes_expanded = greedy_best_first(
+                graph, locations, start, goal
+            )
+
+        elif algorithm == "astar":
+            path, cost, nodes_expanded = a_star(
+                graph, locations, start, goal
+            )
+
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid search algorithm."
+            }), 400
+
+        return jsonify({
+            "status": "success",
+            "algorithm": algorithm,
+            "start": start,
+            "goal": goal,
+            "path": path,
+            "cost": cost,
+            "nodes_expanded": nodes_expanded
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
 
 
 if __name__ == "__main__":
