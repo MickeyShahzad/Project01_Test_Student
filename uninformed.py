@@ -81,14 +81,12 @@ def ucs(graph, start, goal):
         # Remove the path with the LOWEST total cost
         cost, current, path = heapq.heappop(priority_queue)
 
-        # Skip if we already expanded this city
         if current in visited:
             continue
 
         visited.add(current)
         nodes_expanded += 1
 
-        # If we reached the goal, return the result
         if current == goal:
             return path, round(cost, 2), nodes_expanded
 
